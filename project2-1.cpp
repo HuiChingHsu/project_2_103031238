@@ -4,7 +4,7 @@
 #include <vector>
 #include <limits.h>
 #include <queue>
-#include <list>
+#include <stack>
 
 using namespace std;
 
@@ -13,43 +13,57 @@ class position
 public:
     int row;
     int col;
-    position operator = (const position& p){
-        position P;
-        P.row = p.row;
-        P.col = p.col;
-        return P;
-    }
 };
 
-void BFS(position s, int B, vector< vector<int> > map, position *** adj)
+vector< vector<int> > Map;
+int battery;
+int step_rec = 0;
+queue<position> step;
+
+void Steps(position s, position *** adj)
 {
-    list<position> Queue;
-    map[s.row][s.col] += 2;
-    Queue.push_back(s);
+    stack<position> solution;
 
-    while(!Queue.empty()){
-        
-        s.row = Queue.front().row;
-        s.col = Queue.front().col;
-//cout << s.row << s.col << " " << map[s.row][s.col] <<endl;
-        cout << s.row << " " << s.col << endl;  
+    solution.push(s);
 
-        Queue.pop_front();
+    while(!solution.empty()){
+        s.row = solution.top().row;
+        s.col = solution.top().col;
+        solution.pop();
+        Map[s.row][s.col] += 2;
+
+        if(Map[s.row][s.col] == 2 && Map[s.row][s.col] != INT_MIN+2){
+            //Map[s.row][s.col] += 2;
+cout << s.row << " " << s.col << endl;
+            step.push(s);
+            step_rec ++;
+        }
 
         for(int i=0; adj[s.row][s.col][i].row != INT_MAX; i++){
-
-            if( map[adj[s.row][s.col][i].row][adj[s.row][s.col][i].col] == 0){
-                map[adj[s.row][s.col][i].row][adj[s.row][s.col][i].col] += 2;
-                Queue.push_back(adj[s.row][s.col][i]);
+            if(Map[ adj[s.row][s.col][i].row ][ adj[s.row][s.col][i].col ] == 0){
+cout << " " << adj[s.row][s.col][i].row << " " << adj[s.row][s.col][i].col << endl;
+                solution.push(adj[s.row][s.col][i]);
             }
-//cout << adj[s.row][s.col][i].row << adj[s.row][s.col][i].row << endl;
         }
+//cout << step_rec;
     }
+    
+    /*Map[s.row][s.col] += 2;
+    if(Map[s.row][s.col] != INT_MIN+2){
+        step_rec ++;
+        step.push(s);
+cout << s.row << " " << s.col << endl;
+    }
+    for(int i=0; adj[s.row][s.col][i].row != INT_MAX; i++){
+        if(Map[adj[s.row][s.col][i].row][adj[s.row][s.col][i].col] == 0){
+            Steps(adj[s.row][s.col][i], adj);
+        }
+    }*/
 }
 
 int main(int argc, char* argv[])
 {
-    int row_bound, col_bound, battery;
+    int row_bound, col_bound;
     position robot, start_pos;
     
     ifstream file;
@@ -62,8 +76,7 @@ int main(int argc, char* argv[])
     }
     data_name = "./" + id + "/floor.data";
 	file.open(data_name, ios::in);
-    
-    vector< vector<int> > Map;
+
     if(file.is_open()){
         file >> row_bound;
         file >> col_bound;
@@ -110,14 +123,14 @@ int main(int argc, char* argv[])
                     adjList[i][j][x].col = j;
                     x++;
                 }
-                if(i<row_bound-1 && Map[i+1][j] == 0){
-                    adjList[i][j][x].row = i+1;
-                    adjList[i][j][x].col = j;
-                    x++;
-                }
                 if(j>0 && Map[i][j-1] == 0){
                     adjList[i][j][x].row = i;
                     adjList[i][j][x].col = j-1;
+                    x++;
+                }
+                if(i<row_bound-1 && Map[i+1][j] == 0){
+                    adjList[i][j][x].row = i+1;
+                    adjList[i][j][x].col = j;
                     x++;
                 }
                 if(j<col_bound-1 && Map[i][j+1] == 0){
@@ -125,14 +138,10 @@ int main(int argc, char* argv[])
                     adjList[i][j][x].col = j+1;
                 }
             }
-            /*for(int k=0; k<4; k++){
-                cout << adjList[i][j][k].row << " " << adjList[i][j][k].col << " ";
-            }
-            cout << endl;*/
         }
     }//end of creating an adjcency list
 
-    BFS(start_pos, battery, Map, adjList);
+    Steps(start_pos, adjList);
 
     //output result
     /*

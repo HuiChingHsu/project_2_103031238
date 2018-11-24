@@ -4,7 +4,7 @@
 #include <vector>
 #include <limits.h>
 #include <queue>
-#include <list>
+#include <stack>
 
 using namespace std;
 
@@ -13,43 +13,92 @@ class position
 public:
     int row;
     int col;
-    position operator = (const position& p){
-        position P;
-        P.row = p.row;
-        P.col = p.col;
-        return P;
-    }
+    int step_rec = 0;
 };
 
-void BFS(position s, int B, vector< vector<int> > map, position *** adj)
+vector< vector<int> > Map; // changing element
+int battery;
+queue<position> step;
+
+int DFS(position s, position des_pos, position*** adj, vector< vector<int> > visit)
 {
-    list<position> Queue;
-    map[s.row][s.col] += 2;
-    Queue.push_back(s);
 
-    while(!Queue.empty()){
-        
-        s.row = Queue.front().row;
-        s.col = Queue.front().col;
-//cout << s.row << s.col << " " << map[s.row][s.col] <<endl;
-        cout << s.row << " " << s.col << endl;  
+    stack<position> tmp_solution;
 
-        Queue.pop_front();
+    tmp_solution.push(s);
 
+    int x = 0;
+    while(!tmp_solution.empty() && (s.row != des_pos.row && s.col != des_pos.col)){
+//cout << "done! ";
+        s.row = tmp_solution.top().row;
+        s.col = tmp_solution.top().col;
+
+        if(s.row == des_pos.row && s.col == des_pos.col){
+            return s.step_rec;
+        }
+
+        tmp_solution.pop();
+
+        if(visit[s.row][s.col] == 0){
+            visit[s.row][s.col] += 2;
+cout << s.row << " " << s.col << "   ";
+            Map[s.row][s.col] += 2;
+        }
+
+        x++;
         for(int i=0; adj[s.row][s.col][i].row != INT_MAX; i++){
-
-            if( map[adj[s.row][s.col][i].row][adj[s.row][s.col][i].col] == 0){
-                map[adj[s.row][s.col][i].row][adj[s.row][s.col][i].col] += 2;
-                Queue.push_back(adj[s.row][s.col][i]);
+            if(Map[ adj[s.row][s.col][i].row ][ adj[s.row][s.col][i].col ] == 0){
+                adj[s.row][s.col][i].step_rec = x;
+/*cout << adj[s.row][s.col][i].step_rec 
+<< " " << adj[s.row][s.col][i].row << " " << adj[s.row][s.col][i].col << endl;*/
+                tmp_solution.push(adj[s.row][s.col][i]);
             }
-//cout << adj[s.row][s.col][i].row << adj[s.row][s.col][i].row << endl;
+        }
+        
+    }
+//cout << s.step_rec << endl;
+    return s.step_rec;
+}
+
+void Steps(int row, int col, position s, position *** adj)
+{
+    int step_ans = 0;
+    int num;
+    vector< vector<int> > visit, map_rec; //map_rec -> for visit initialization
+
+    for(int i=0; i<row; i++){ // visit? 
+        vector<int> Row;
+        for(int j=0; j<col; j++){
+            num = Map[i][j];
+            Row.push_back(num);
+        }
+        visit.push_back(Row);
+        map_rec.push_back(Row);
+    }
+    
+    for(int i=0; i<row; i++){
+        for(int j=0; j<col; j++){
+
+            for(int k=0; k<row; k++){
+                for(int l=0; l<col; l++){
+                    visit[k][l] = map_rec[k][l];
+                }
+            }
+
+            if(Map[i][j] == 0){
+                position des_pos;
+                des_pos.row = i, des_pos.col = j;
+//cout << "OK " << des_pos.row << " " << des_pos.col << endl;
+                step_ans += DFS(s, des_pos, adj, visit);
+            }
         }
     }
+cout << step_ans << " ";
 }
 
 int main(int argc, char* argv[])
 {
-    int row_bound, col_bound, battery;
+    int row_bound, col_bound;
     position robot, start_pos;
     
     ifstream file;
@@ -62,8 +111,7 @@ int main(int argc, char* argv[])
     }
     data_name = "./" + id + "/floor.data";
 	file.open(data_name, ios::in);
-    
-    vector< vector<int> > Map;
+
     if(file.is_open()){
         file >> row_bound;
         file >> col_bound;
@@ -110,14 +158,14 @@ int main(int argc, char* argv[])
                     adjList[i][j][x].col = j;
                     x++;
                 }
-                if(i<row_bound-1 && Map[i+1][j] == 0){
-                    adjList[i][j][x].row = i+1;
-                    adjList[i][j][x].col = j;
-                    x++;
-                }
                 if(j>0 && Map[i][j-1] == 0){
                     adjList[i][j][x].row = i;
                     adjList[i][j][x].col = j-1;
+                    x++;
+                }
+                if(i<row_bound-1 && Map[i+1][j] == 0){
+                    adjList[i][j][x].row = i+1;
+                    adjList[i][j][x].col = j;
                     x++;
                 }
                 if(j<col_bound-1 && Map[i][j+1] == 0){
@@ -125,14 +173,10 @@ int main(int argc, char* argv[])
                     adjList[i][j][x].col = j+1;
                 }
             }
-            /*for(int k=0; k<4; k++){
-                cout << adjList[i][j][k].row << " " << adjList[i][j][k].col << " ";
-            }
-            cout << endl;*/
         }
     }//end of creating an adjcency list
 
-    BFS(start_pos, battery, Map, adjList);
+    Steps(row_bound, col_bound, start_pos, adjList);
 
     //output result
     /*
