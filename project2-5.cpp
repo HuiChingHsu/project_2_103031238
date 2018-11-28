@@ -30,6 +30,12 @@ void DFS(position s, position des_pos, position*** adj)
     if(found == true || step_curr == battery/2) return;
     if(visit[s.row-1][s.col] != 0 && visit[s.row][s.col-1] != 0 
        && visit[s.row+1][s.col]!=0 && visit[s.row][s.col+1] != 0 && s.row != des_pos.row && s.col != des_pos.col){
+           Map[s.row][s.col] += 2;
+           visit[s.row][s.col] += 2;
+           step_curr++;
+           step.push(s);
+           step_back.push(s);
+cout << s.row << " " << s.col << "  ";
            return;
     }
 
@@ -64,14 +70,15 @@ cout << s.row << " " << s.col << "  ";
     }
     // find adjecent nodes
     for(int i=0; adj[s.row][s.col][i].row != INT_MAX; i++){
-        if(visit[adj[s.row][s.col][i].row][adj[s.row][s.col][i].col] == 0){
+        //if(visit[adj[s.row][s.col][i].row][adj[s.row][s.col][i].col] == 0){
+//cout << " (" << adj[s.row][s.col][i].row << " " << adj[s.row][s.col][i].col <<") ";
             DFS(adj[s.row][s.col][i], des_pos, adj);
             if(found == true || step_curr == battery/2) break;
             step.push(s);
             step_back.push(s);
             step_curr++;
-cout << s.row << " " << s.col << "  ";
-        }
+cout << "." << s.row << " " << s.col << "  ";
+        //}
     }
 }
 
@@ -151,7 +158,7 @@ int main(int argc, char* argv[])
         file >> row_bound;
         file >> col_bound;
         file >> battery;
-
+//cout <<row_bound << " " << col_bound << " " << battery << endl;
         for(int i=0; i<row_bound; i++){  // creating the map
             vector<int> Row;
             for(int j=0; j<col_bound; j++){
@@ -174,7 +181,12 @@ int main(int argc, char* argv[])
         cout << "Unable to open file" << endl;
         return 0;
     } //end of inputting data (Map -> visiting state) R -> INT_MIN
-
+/*for(int i=0; i<row_bound; i++){
+    for(int j=0; j<col_bound; j++){
+        cout << Map[i][j] << " ";
+    }
+    cout << endl;
+}*/
     position*** adjList = new position** [row_bound];
     int x;
     for(int i=0; i<row_bound; i++){
