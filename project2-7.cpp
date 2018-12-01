@@ -34,6 +34,7 @@ void BFS(position s, position des_pos, position*** adj)
     visit[s.row][s.col] += 2;
 
     while(front < rear){
+//cout << "OK ";
         position tmp = rec[front];
         if(tmp.row == des_pos.row && tmp.col == des_pos.col){
             step_curr = tmp.steps;
@@ -41,8 +42,28 @@ void BFS(position s, position des_pos, position*** adj)
             break;
         }
         front ++;
-        for(int i=0; adj[tmp.row][tmp.col][i].row >0 && adj[tmp.row][s.col][i].row <1000; i++){
+
+        int length = 0, tmp_R, tmp_C;  // adjList sorting
+
+        for(int i=0; adj[tmp.row][tmp.col][i].row >0 && adj[tmp.row][tmp.col][i].row <1000; i++){ //??
+            length++;
+        }
+
+        for(int i=0; i<length-1; i++){ 
+            for(int j=0; j<length-1-i; j++){
+                if(Map[ adj[tmp.row][tmp.col][j].row ][ adj[tmp.row][tmp.col][j].col ] >
+                Map[ adj[tmp.row][tmp.col][j+1].row ][ adj[tmp.row][tmp.col][j+1].col ] ){
+                    tmp_R = adj[tmp.row][tmp.col][j].row, tmp_C = adj[tmp.row][tmp.col][j].col;
+                    adj[tmp.row][tmp.col][j].row = adj[tmp.row][tmp.col][j+1].row;
+                    adj[tmp.row][tmp.col][j].col = adj[tmp.row][tmp.col][j+1].col;
+                    adj[tmp.row][tmp.col][j+1].row = tmp_R, adj[tmp.row][tmp.col][j+1].col = tmp_C;
+                }
+            }
+        }//
+
+        for(int i=0; adj[tmp.row][tmp.col][i].row >-1 && adj[tmp.row][s.col][i].row <1001; i++){
             if(visit[adj[tmp.row][tmp.col][i].row][adj[tmp.row][tmp.col][i].col] == 0){
+//cout << " (" << adj[tmp.row][tmp.col][i].row << " " << adj[tmp.row][tmp.col][i].col << ") ";
                 visit[adj[tmp.row][tmp.col][i].row][adj[tmp.row][tmp.col][i].col] += 2;
                 rec[rear].row = adj[tmp.row][tmp.col][i].row, rec[rear].col = adj[tmp.row][tmp.col][i].col;
                 rec[rear].pre = front-1;
@@ -57,7 +78,7 @@ void Path(int idx)
 {
     if(idx == 0) return;
     Path(rec[idx].pre);
-    Map[rec[idx].row][rec[idx].col] = 2;
+    Map[rec[idx].row][rec[idx].col] ++;
     step.push(rec[idx]);
     step_back.push(rec[idx]);
 }
@@ -90,7 +111,6 @@ void Steps(position s, position *** adj)
                 des_pos.row = i, des_pos.col = j;
 cout << "(" << des_pos.row << "," << des_pos.col << ") ";
                 BFS(s, des_pos, adj);
-cout << endl;
                 //input solution and modify Map matrix
                 Path(End);
                 solution.push(s);//start_pos
